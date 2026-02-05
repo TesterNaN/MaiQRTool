@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>扫码</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 300px;
+            text-align: center;
+        }
+        .qr-area {
+            /* 固定宽高，确保布局稳定 */
+            width: 220px;
+            height: 220px;
+            margin: 20px auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        /* 用于显示二维码的画布 */
+        #qrcodeCanvas {
+            width: 100%;
+            height: 100%;
+            display: none; /* 初始隐藏，生成成功后再显示 */
+        }
+        /* 状态提示（覆盖在二维码区域上） */
+        #status {
+            font-size: 16px;
+            color: #666;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: white;
+            border-radius: 8px;
+        }
+        .loading {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top-color: #1890ff;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 15px;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+        .error {
+            color: #f5222d;
+            font-size: 14px;
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff1f0;
+            border-radius: 6px;
+            border: 1px solid #ffa39e;
+            display: none;
+        }
+    </style>
+</head>
+<body onload="startAutomation()">
+    <div class="container">
+        <div class="qr-area">
+            <img id="qrcodeImage" style="display:none;">
+            <div id="status">
+                <div class="loading"></div>
+                <div>正在获取...</div>
+            </div>
+        </div>
+        <!-- 错误信息，仅在出错时显示 -->
+        <div class="error" id="error"></div>
+    </div>
+
+    <script>
+        async function startAutomation() {
+             const statusEl = document.getElementById('status');
+            const errorEl = document.getElementById('error');
+            const qrImageEl = document.getElementById('qrcodeImage'); // 获取图片元素
+
+            try {
+                const response = await fetch('/getcode');
+                const data = await response.json();
+
+                if (data.success && data.qr_results && data.qr_results.length > 0) {
+                    const qrText = data.qr_results[0]; // 例如: "SGWCMAID260130..."
+
+                    // 关键步骤：构造直接指向二维码图片的URL
+                    // 1. 移除可能存在的固定前缀（如'SGWC'）
+                    const codeForUrl = qrText.replace(/^SGWC/, '');
+                    // 或者直接取固定位置，根据您的数据格式调整。例如，如果总是去掉前4位：
+                    // const codeForUrl = qrText.substring(4);
+
+                    // 2. 拼接出完整的图片URL
+                    const imageUrl = `https://wq.wahlap.net/qrcode/img/${codeForUrl}.png?v`;
+
+                    // 3. 将图片URL设置给img元素的src，并显示它
+                    qrImageEl.src = imageUrl;
+                    qrImageEl.onload = function() {
+                        // 图片加载成功
+                        statusEl.style.display = 'none';
+                        qrImageEl.style.display = 'block';
+                    };
+                    qrImageEl.onerror = function() {
+                        // 图片加载失败（例如编码有误或服务不可用）
+                        throw new Error('无法从服务器加载二维码图片。');
+                    };
+
+                } else {
+                    // 后端流程成功但未识别到二维码，或流程失败
+                    throw new Error(data.error || '未识别到二维码');
+                }
+            } catch (err) {
+                // 处理任何阶段发生的错误
+                console.error('流程执行失败:', err);
+                statusEl.innerHTML = `<div style="color:#f5222d;">❌ 获取失败</div>`;
+                errorEl.textContent = '错误: ' + err.message;
+                errorEl.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

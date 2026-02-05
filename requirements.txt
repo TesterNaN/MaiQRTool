@@ -1,0 +1,7 @@
+Flask
+Pillow
+psutil
+pycryptodome
+pywin32
+pyzbar
+requests
