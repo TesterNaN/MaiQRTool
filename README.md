@@ -42,7 +42,7 @@ python app.py
 - 本地访问地址：`http://localhost:5000`
 
 ### 4. 登录使用
-1. 浏览器访问：`http://localhost:5000/login?password=你的密码`
+1. 浏览器访问：`http://localhost:5000/login?password=你的密码`（注意单次登录即可长期授权，不需要反复登录）
 2. 登录成功后，访问 `http://localhost:5000` 即可自动获取并显示二维码
 
 **小屏幕设备说明**：如果你的设备是小屏幕或低版本的安卓设备（如安卓手表、安卓老人机等），可以直接访问 ``http://localhost:5000/img`，该链接会直接返回纯二维码图片。
@@ -106,3 +106,4 @@ python app.py
 ## 📄 许可证
 
 本项目基于 [GPL-3.0](LICENSE) 许可证开源。
+
